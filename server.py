@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
@@ -10,10 +9,6 @@ CORS(app)
 
 CLINICAL_TRIALS_API = "https://clinicaltrials.gov/api/query/study_fields"
 
-
-# -----------------------------
-# Helper function to fetch trials
-# -----------------------------
 def fetch_trials(phase_filter=["Phase 2", "Phase 3"], days_ahead=180, max_records=50):
     today = datetime.today().date()
     end_date = today + timedelta(days=days_ahead)
@@ -49,16 +44,12 @@ def fetch_trials(phase_filter=["Phase 2", "Phase 3"], days_ahead=180, max_record
     return trials_list
 
 
-# -----------------------------
-# API Endpoint: /trials
-# -----------------------------
 @app.route('/trials', methods=['GET'])
 def get_trials():
     phase_param = request.args.get("phase", "Phase 2,Phase 3")
     days_ahead = int(request.args.get("days_ahead", 180))
     max_results = int(request.args.get("max_results", 50))
 
-    # Normalize phases into list
     phase_filter = []
     for p in phase_param.split(","):
         p = p.strip()
@@ -83,17 +74,14 @@ def get_trials():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-# -----------------------------
-# OpenAPI Specification
-# -----------------------------
-@app.route("/openapi.json")
+@app.route('/openapi.json', methods=['GET'])
 def openapi_spec():
     spec = {
         "openapi": "3.0.0",
         "info": {
             "title": "Biotech Clinical Trials API",
             "version": "1.0.0",
-            "description": "Fetch clinical trials data from ClinicalTrials.gov filtered by phase, date, and number of results."
+            "description": "Fetch ClinicalTrials.gov data filtered by phase, date, and number of results."
         },
         "servers": [
             {"url": "https://biotechradar-proxy.onrender.com"}
@@ -130,16 +118,7 @@ def openapi_spec():
                             "description": "A list of clinical trials",
                             "content": {
                                 "application/json": {
-                                    "schema": {
-                                        "type": "object",
-                                        "properties": {
-                                            "status": {"type": "string"},
-                                            "requested_phase": {"type": "array", "items": {"type": "string"}},
-                                            "days_ahead": {"type": "integer"},
-                                            "max_results": {"type": "integer"},
-                                            "data": {"type": "array", "items": {"type": "object"}}
-                                        }
-                                    }
+                                    "schema": {"type": "object"}
                                 }
                             }
                         }
@@ -151,9 +130,6 @@ def openapi_spec():
     return jsonify(spec)
 
 
-# -----------------------------
-# Entry point for Render
-# -----------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
