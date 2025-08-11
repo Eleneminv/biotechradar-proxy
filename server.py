@@ -1,6 +1,7 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, Response
 from flask_cors import CORS
 import requests
+import json
 from datetime import datetime, timedelta
 from os import environ
 
@@ -70,15 +71,18 @@ def get_trials():
             days_ahead=days_ahead,
             max_records=max_results
         )
-        return jsonify({
-            "status": "success",
-            "requested_phase": phase_filter,
-            "days_ahead": days_ahead,
-            "max_results": max_results,
-            "data": records
-        }), 200
+        return Response(
+            json.dumps({
+                "status": "success",
+                "requested_phase": phase_filter,
+                "days_ahead": days_ahead,
+                "max_results": max_results,
+                "data": records
+            }, indent=2),
+            mimetype="application/json"
+        )
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return Response(json.dumps({"status": "error", "message": str(e)}), mimetype="application/json", status=500)
 
 
 # ------------------------------
@@ -141,7 +145,7 @@ def openapi_spec():
             }
         }
     }
-    return jsonify(spec)
+    return Response(json.dumps(spec, indent=2, sort_keys=False), mimetype="application/json")
 
 
 # ------------------------------
