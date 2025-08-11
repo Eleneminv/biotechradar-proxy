@@ -88,6 +88,8 @@ def get_trials():
 # OpenAPI Specification for ChatGPT Actions
 # ------------------------------
 from collections import OrderedDict
+from flask import Response
+import json
 
 @app.route("/openapi.json", methods=["GET"])
 def openapi_spec():
@@ -144,7 +146,12 @@ def openapi_spec():
             }
         })
     ])
-    return jsonify(spec)
+
+    # Manually create the JSON without key reordering
+    return Response(
+        json.dumps(spec, indent=2),
+        mimetype="application/json"
+    )
 
 # ------------------------------
 # Entry point for Render
