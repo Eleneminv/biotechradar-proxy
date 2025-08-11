@@ -1,11 +1,9 @@
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
 from datetime import datetime, timedelta
 from os import environ
-from collections import OrderedDict
 import json
-import reprlib
 
 app = Flask(__name__)
 CORS(app)
@@ -85,33 +83,29 @@ def get_trials():
 
 
 # ------------------------------
-# OpenAPI Specification for ChatGPT Actions
+# GPT-safe OpenAPI Specification
 # ------------------------------
 @app.route("/openapi.json", methods=["GET"])
 def openapi_spec():
-    servers_list = [
-        {
-            "url": "https://biotechradar-proxy.onrender.com"
-        }
-    ]
+    server_url = "https://biotechradar-proxy.onrender.com".strip()
 
-    # Debug log to check for hidden characters
-    print("DEBUG: servers[0]['url'] repr →", reprlib.repr(servers_list[0]["url"]))
-
-    # Force exact key order
-    spec = OrderedDict([
-        ("openapi", "3.0.0"),
-        ("info", OrderedDict([
-            ("title", "Biotech Clinical Trials API"),
-            ("version", "1.0.0"),
-            ("description", "Fetch ClinicalTrials.gov data filtered by phase, date, and number of results.")
-        ])),
-        ("servers", servers_list),
-        ("paths", OrderedDict([
-            ("/trials", OrderedDict([
-                ("get", OrderedDict([
-                    ("summary", "Get clinical trials"),
-                    ("parameters", [
+    spec = {
+        "openapi": "3.0.0",
+        "info": {
+            "title": "Biotech Clinical Trials API",
+            "version": "1.0.0",
+            "description": "Fetch ClinicalTrials.gov data filtered by phase, date, and number of results."
+        },
+        "servers": [
+            {
+                "url": server_url
+            }
+        ],
+        "paths": {
+            "/trials": {
+                "get": {
+                    "summary": "Get clinical trials",
+                    "parameters": [
                         {
                             "name": "phase",
                             "in": "query",
@@ -133,26 +127,27 @@ def openapi_spec():
                             "schema": {"type": "integer"},
                             "description": "Max number of results to return"
                         }
-                    ]),
-                    ("responses", OrderedDict([
-                        ("200", OrderedDict([
-                            ("description", "A list of clinical trials"),
-                            ("content", {
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "A list of clinical trials",
+                            "content": {
                                 "application/json": {
-                                    "schema": {"type": "object"}
+                                    "schema": {
+                                        "type": "object"
+                                    }
                                 }
-                            })
-                        ]))
-                    ]))
-                ]))
-            ]))
-        ]))
-    ])
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-    # Return raw JSON in correct order
-    return Response(
-        json.dumps(spec, indent=2),
-        mimetype="application/json; charset=utf-8"
+    return app.response_class(
+        response=json.dumps(spec, ensure_ascii=False, indent=2, sort_keys=True),
+        mimetype='application/json'
     )
 
 
