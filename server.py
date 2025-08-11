@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
 from datetime import datetime, timedelta
-from os import environ
 
 app = Flask(__name__)
 CORS(app)
@@ -22,25 +21,24 @@ def fetch_trials(phase_filter=["Phase 2", "Phase 3"], days_ahead=180, max_record
         "fmt": "json"
     }
 
-    r = requests.get(CLINICAL_TRIALS_API, params=params)
-    if r.status_code != 200:
-        return []
+    try:
+        r = requests.get(CLINICAL_TRIALS_API, params=params, timeout=10)
+        r.raise_for_status()
+    except requests.RequestException as e:
+        return {"error": str(e)}
 
     data = r.json()
     trials_list = []
     for study in data.get("StudyFieldsResponse", {}).get("StudyFields", []):
-        try:
-            trials_list.append({
-                "NCTId": study["NCTId"][0] if study["NCTId"] else None,
-                "Condition": ", ".join(study["Condition"]) if study["Condition"] else None,
-                "Phase": ", ".join(study["Phase"]) if study["Phase"] else None,
-                "Title": study["BriefTitle"][0] if study["BriefTitle"] else None,
-                "Sponsor": study["LeadSponsorName"][0] if study["LeadSponsorName"] else None,
-                "PrimaryCompletionDate": study["PrimaryCompletionDate"][0] if study["PrimaryCompletionDate"] else None,
-                "Status": study["OverallStatus"][0] if study["OverallStatus"] else None
-            })
-        except Exception:
-            continue
+        trials_list.append({
+            "NCTId": study["NCTId"][0] if study["NCTId"] else None,
+            "Condition": ", ".join(study["Condition"]) if study["Condition"] else None,
+            "Phase": ", ".join(study["Phase"]) if study["Phase"] else None,
+            "Title": study["BriefTitle"][0] if study["BriefTitle"] else None,
+            "Sponsor": study["LeadSponsorName"][0] if study["LeadSponsorName"] else None,
+            "PrimaryCompletionDate": study["PrimaryCompletionDate"][0] if study["PrimaryCompletionDate"] else None,
+            "Status": study["OverallStatus"][0] if study["OverallStatus"] else None
+        })
 
     return trials_list
 
@@ -53,10 +51,12 @@ def get_trials():
     trials = fetch_trials([phase], days_ahead, max_results)
     return jsonify(trials)
 
-@app.route("/health", methods=["GET"])
-def health_check():
-    return jsonify({"status": "ok"}), 200
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"status": "ok", "message": "Biotech Radar API is running"})
 
+# Render entry point
 if __name__ == "__main__":
+    from os import environ
     port = int(environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
