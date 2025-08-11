@@ -2,18 +2,23 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
 from datetime import datetime, timedelta
-import os
+from os import environ
 
 app = Flask(__name__)
 CORS(app)
 
 CLINICAL_TRIALS_API = "https://clinicaltrials.gov/api/query/study_fields"
 
+# ------------------------------
+# Fetch trials from ClinicalTrials.gov
+# ------------------------------
 def fetch_trials(phase_filter=["Phase 2", "Phase 3"], days_ahead=180, max_records=50):
     today = datetime.today().date()
     end_date = today + timedelta(days=days_ahead)
 
-    expr = f"AREA[Phase]({' OR '.join(phase_filter)}) AND NOT Recruiting[OVERALL_STATUS]"
+    # Fixed query format to avoid 404
+    expr = f"AREA[Phase]({' OR '.join(phase_filter)}) AND NOT OVERALL_STATUS:Recruiting"
+
     params = {
         "expr": expr,
         "fields": "NCTId,Condition,Phase,BriefTitle,LeadSponsorName,PrimaryCompletionDate,OverallStatus",
@@ -23,7 +28,7 @@ def fetch_trials(phase_filter=["Phase 2", "Phase 3"], days_ahead=180, max_record
     }
 
     try:
-        r = requests.get(CLINICAL_TRIALS_API, params=params, timeout=10)
+        r = requests.get(CLINICAL_TRIALS_API, params=params, timeout=15)
         r.raise_for_status()
     except requests.RequestException as e:
         return {"error": str(e)}
@@ -44,12 +49,16 @@ def fetch_trials(phase_filter=["Phase 2", "Phase 3"], days_ahead=180, max_record
     return trials_list
 
 
+# ------------------------------
+# API route: /trials
+# ------------------------------
 @app.route('/trials', methods=['GET'])
 def get_trials():
     phase_param = request.args.get("phase", "Phase 2,Phase 3")
     days_ahead = int(request.args.get("days_ahead", 180))
     max_results = int(request.args.get("max_results", 50))
 
+    # Normalize phases
     phase_filter = []
     for p in phase_param.split(","):
         p = p.strip()
@@ -74,6 +83,9 @@ def get_trials():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+# ------------------------------
+# OpenAPI Specification for ChatGPT Actions
+# ------------------------------
 @app.route("/openapi.json", methods=["GET"])
 def openapi_spec():
     spec = {
@@ -81,12 +93,18 @@ def openapi_spec():
         "info": {
             "title": "Biotech Clinical Trials API",
             "version": "1.0.0",
-            "description": "Fetch ClinicalTrials.gov data filtered by phase, date, and number of results."
+            "description": "Fetch ClinicalTrials.gov data filtered by phase, date, and number of results.",
+            "contact": {
+                "email": "elenem@proton.me",
+                "url": "https://biotechradar-proxy.onrender.com"
+            },
+            "license": {
+                "name": "MIT",
+                "url": "https://opensource.org/licenses/MIT"
+            }
         },
         "servers": [
-            {
-                "url": "https://biotechradar-proxy.onrender.com"
-            }
+            {"url": "https://biotechradar-proxy.onrender.com"}
         ],
         "paths": {
             "/trials": {
@@ -120,9 +138,7 @@ def openapi_spec():
                             "description": "A list of clinical trials",
                             "content": {
                                 "application/json": {
-                                    "schema": {
-                                        "type": "object"
-                                    }
+                                    "schema": {"type": "object"}
                                 }
                             }
                         }
@@ -132,3 +148,11 @@ def openapi_spec():
         }
     }
     return jsonify(spec)
+
+
+# ------------------------------
+# Entry point
+# ------------------------------
+if __name__ == "__main__":
+    port = int(environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
