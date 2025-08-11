@@ -3,7 +3,7 @@ from flask_cors import CORS
 import requests
 from datetime import datetime, timedelta
 from os import environ
-import json
+from collections import OrderedDict
 
 app = Flask(__name__)
 CORS(app)
@@ -17,6 +17,7 @@ def fetch_trials(phase_filter=["Phase 2", "Phase 3"], days_ahead=180, max_record
     today = datetime.today().date()
     end_date = today + timedelta(days=days_ahead)
 
+    # Use correct query format to avoid 404 errors
     expr = f"AREA[Phase]({' OR '.join(phase_filter)}) AND NOT OVERALL_STATUS:Recruiting"
 
     params = {
@@ -58,6 +59,7 @@ def get_trials():
     days_ahead = int(request.args.get("days_ahead", 180))
     max_results = int(request.args.get("max_results", 50))
 
+    # Normalize phases
     phase_filter = []
     for p in phase_param.split(","):
         p = p.strip()
@@ -83,25 +85,21 @@ def get_trials():
 
 
 # ------------------------------
-# GPT-safe OpenAPI Specification
+# OpenAPI Specification for ChatGPT Actions
 # ------------------------------
 @app.route("/openapi.json", methods=["GET"])
 def openapi_spec():
-    server_url = "https://biotechradar-proxy.onrender.com".strip()
-
-    spec = {
-        "openapi": "3.0.0",
-        "info": {
+    spec = OrderedDict([
+        ("openapi", "3.0.0"),
+        ("info", {
             "title": "Biotech Clinical Trials API",
             "version": "1.0.0",
             "description": "Fetch ClinicalTrials.gov data filtered by phase, date, and number of results."
-        },
-        "servers": [
-            {
-                "url": server_url
-            }
-        ],
-        "paths": {
+        }),
+        ("servers", [
+            {"url": "https://biotechradar-proxy.onrender.com"}
+        ]),
+        ("paths", {
             "/trials": {
                 "get": {
                     "summary": "Get clinical trials",
@@ -133,26 +131,20 @@ def openapi_spec():
                             "description": "A list of clinical trials",
                             "content": {
                                 "application/json": {
-                                    "schema": {
-                                        "type": "object"
-                                    }
+                                    "schema": {"type": "object"}
                                 }
                             }
                         }
                     }
                 }
             }
-        }
-    }
-
-    return app.response_class(
-        response=json.dumps(spec, ensure_ascii=False, indent=2, sort_keys=True),
-        mimetype='application/json'
-    )
+        })
+    ])
+    return jsonify(spec)
 
 
 # ------------------------------
-# Entry point
+# Entry point for Render
 # ------------------------------
 if __name__ == "__main__":
     port = int(environ.get("PORT", 5000))
