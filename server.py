@@ -91,6 +91,7 @@ def get_trials():
 from flask import Response
 import json
 import reprlib
+from collections import OrderedDict
 
 @app.route("/openapi.json", methods=["GET"])
 def openapi_spec():
@@ -100,22 +101,23 @@ def openapi_spec():
         }
     ]
 
-    # Debug: print and log the raw representation to detect hidden chars
+    # Debug log to check for hidden characters
     print("DEBUG: servers[0]['url'] repr →", reprlib.repr(servers_list[0]["url"]))
 
-    spec = {
-        "openapi": "3.0.0",
-        "info": {
-            "title": "Biotech Clinical Trials API",
-            "version": "1.0.0",
-            "description": "Fetch ClinicalTrials.gov data filtered by phase, date, and number of results."
-        },
-        "servers": servers_list,
-        "paths": {
-            "/trials": {
-                "get": {
-                    "summary": "Get clinical trials",
-                    "parameters": [
+    # Force exact key order
+    spec = OrderedDict([
+        ("openapi", "3.0.0"),
+        ("info", OrderedDict([
+            ("title", "Biotech Clinical Trials API"),
+            ("version", "1.0.0"),
+            ("description", "Fetch ClinicalTrials.gov data filtered by phase, date, and number of results.")
+        ])),
+        ("servers", servers_list),
+        ("paths", OrderedDict([
+            ("/trials", OrderedDict([
+                ("get", OrderedDict([
+                    ("summary", "Get clinical trials"),
+                    ("parameters", [
                         {
                             "name": "phase",
                             "in": "query",
@@ -137,25 +139,23 @@ def openapi_spec():
                             "schema": {"type": "integer"},
                             "description": "Max number of results to return"
                         }
-                    ],
-                    "responses": {
-                        "200": {
-                            "description": "A list of clinical trials",
-                            "content": {
+                    ]),
+                    ("responses", OrderedDict([
+                        ("200", OrderedDict([
+                            ("description", "A list of clinical trials"),
+                            ("content", {
                                 "application/json": {
-                                    "schema": {
-                                        "type": "object"
-                                    }
+                                    "schema": {"type": "object"}
                                 }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+                            })
+                        ]))
+                    ]))
+                ]))
+            ]))
+        ]))
+    ])
 
-    # Serve clean JSON with correct headers
+    # Return raw JSON in correct order
     return Response(
         json.dumps(spec, indent=2),
         mimetype="application/json; charset=utf-8"
