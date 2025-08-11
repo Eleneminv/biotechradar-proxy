@@ -68,6 +68,9 @@ def openapi_spec():
             "title": "Biotech Clinical Trials API",
             "version": "1.0.0"
         },
+        "servers": [
+            {"url": "https://biotechradar-proxy.onrender.com"}
+        ],
         "paths": {
             "/trials": {
                 "get": {
