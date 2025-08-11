@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
 from datetime import datetime, timedelta
-import os
+from os import environ
 
 app = Flask(__name__)
 CORS(app)
@@ -43,15 +43,12 @@ def fetch_trials(phase_filter=["Phase 2", "Phase 3"], days_ahead=180, max_record
 
     return trials_list
 
-
 @app.route('/trials', methods=['GET'])
 def get_trials():
-    # Read parameters with safe defaults
     phase_param = request.args.get("phase", "Phase 2,Phase 3")
     days_ahead = int(request.args.get("days_ahead", 180))
     max_results = int(request.args.get("max_results", 50))
 
-    # Normalize phases into list (remove spaces, allow "2" -> "Phase 2")
     phase_filter = []
     for p in phase_param.split(","):
         p = p.strip()
@@ -75,15 +72,13 @@ def get_trials():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-
 @app.route("/openapi.json")
 def openapi_spec():
     spec = {
         "openapi": "3.0.0",
         "info": {
             "title": "Biotech Clinical Trials API",
-            "version": "1.0.0",
-            "description": "Fetch live clinical trial data from ClinicalTrials.gov filtered by phase, date, and record limit."
+            "version": "1.0.0"
         },
         "servers": [
             {"url": "https://biotechradar-proxy.onrender.com"}
@@ -134,8 +129,6 @@ def openapi_spec():
     }
     return jsonify(spec)
 
-
-# Render entry point
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
