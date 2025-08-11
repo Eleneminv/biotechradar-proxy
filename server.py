@@ -1,13 +1,19 @@
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
 from datetime import datetime, timedelta
+import os
 
 app = Flask(__name__)
 CORS(app)
 
 CLINICAL_TRIALS_API = "https://clinicaltrials.gov/api/query/study_fields"
 
+
+# -----------------------------
+# Helper function to fetch trials
+# -----------------------------
 def fetch_trials(phase_filter=["Phase 2", "Phase 3"], days_ahead=180, max_records=50):
     today = datetime.today().date()
     end_date = today + timedelta(days=days_ahead)
@@ -42,12 +48,17 @@ def fetch_trials(phase_filter=["Phase 2", "Phase 3"], days_ahead=180, max_record
 
     return trials_list
 
+
+# -----------------------------
+# API Endpoint: /trials
+# -----------------------------
 @app.route('/trials', methods=['GET'])
 def get_trials():
     phase_param = request.args.get("phase", "Phase 2,Phase 3")
     days_ahead = int(request.args.get("days_ahead", 180))
     max_results = int(request.args.get("max_results", 50))
 
+    # Normalize phases into list
     phase_filter = []
     for p in phase_param.split(","):
         p = p.strip()
@@ -71,6 +82,10 @@ def get_trials():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+
+# -----------------------------
+# OpenAPI Specification
+# -----------------------------
 @app.route("/openapi.json")
 def openapi_spec():
     spec = {
@@ -78,7 +93,7 @@ def openapi_spec():
         "info": {
             "title": "Biotech Clinical Trials API",
             "version": "1.0.0",
-            "description": "Fetch clinical trials data from ClinicalTrials.gov"
+            "description": "Fetch clinical trials data from ClinicalTrials.gov filtered by phase, date, and number of results."
         },
         "servers": [
             {"url": "https://biotechradar-proxy.onrender.com"}
@@ -91,23 +106,23 @@ def openapi_spec():
                         {
                             "name": "phase",
                             "in": "query",
-                            "schema": {"type": "string"},
+                            "description": "Clinical trial phase (e.g., Phase 2, Phase 3)",
                             "required": False,
-                            "description": "Clinical trial phase (e.g., Phase 2, Phase 3)"
+                            "schema": {"type": "string"}
                         },
                         {
                             "name": "days_ahead",
                             "in": "query",
-                            "schema": {"type": "integer"},
+                            "description": "Days ahead from today to include in the search",
                             "required": False,
-                            "description": "Days ahead from today to include in the search"
+                            "schema": {"type": "integer"}
                         },
                         {
                             "name": "max_results",
                             "in": "query",
-                            "schema": {"type": "integer"},
+                            "description": "Max number of results to return",
                             "required": False,
-                            "description": "Max number of results to return"
+                            "schema": {"type": "integer"}
                         }
                     ],
                     "responses": {
@@ -135,7 +150,10 @@ def openapi_spec():
     }
     return jsonify(spec)
 
+
+# -----------------------------
+# Entry point for Render
+# -----------------------------
 if __name__ == "__main__":
-    from os import environ
-    port = int(environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
