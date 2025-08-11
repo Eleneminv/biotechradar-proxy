@@ -90,9 +90,19 @@ def get_trials():
 # ------------------------------
 from flask import Response
 import json
+import reprlib
 
 @app.route("/openapi.json", methods=["GET"])
 def openapi_spec():
+    servers_list = [
+        {
+            "url": "https://biotechradar-proxy.onrender.com"
+        }
+    ]
+
+    # Debug: print and log the raw representation to detect hidden chars
+    print("DEBUG: servers[0]['url'] repr →", reprlib.repr(servers_list[0]["url"]))
+
     spec = {
         "openapi": "3.0.0",
         "info": {
@@ -100,11 +110,7 @@ def openapi_spec():
             "version": "1.0.0",
             "description": "Fetch ClinicalTrials.gov data filtered by phase, date, and number of results."
         },
-        "servers": [
-            {
-                "url": "https://biotechradar-proxy.onrender.com"
-            }
-        ],
+        "servers": servers_list,
         "paths": {
             "/trials": {
                 "get": {
