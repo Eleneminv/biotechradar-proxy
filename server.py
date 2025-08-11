@@ -2,14 +2,12 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
 from datetime import datetime, timedelta
-from os import environ
 
 app = Flask(__name__)
 CORS(app)
 
 CLINICAL_TRIALS_API = "https://clinicaltrials.gov/api/query/study_fields"
 
-# ------------------ Fetch Trials Function ------------------ #
 def fetch_trials(phase_filter=["Phase 2", "Phase 3"], days_ahead=180, max_records=50):
     today = datetime.today().date()
     end_date = today + timedelta(days=days_ahead)
@@ -44,7 +42,6 @@ def fetch_trials(phase_filter=["Phase 2", "Phase 3"], days_ahead=180, max_record
 
     return trials_list
 
-# ------------------ API Endpoint ------------------ #
 @app.route('/trials', methods=['GET'])
 def get_trials():
     phase_param = request.args.get("phase", "Phase 2,Phase 3")
@@ -74,7 +71,6 @@ def get_trials():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ------------------ OpenAPI Spec for GPT ------------------ #
 @app.route("/openapi.json")
 def openapi_spec():
     spec = {
@@ -123,16 +119,10 @@ def openapi_spec():
                                         "type": "object",
                                         "properties": {
                                             "status": {"type": "string"},
-                                            "requested_phase": {
-                                                "type": "array",
-                                                "items": {"type": "string"}
-                                            },
+                                            "requested_phase": {"type": "array", "items": {"type": "string"}},
                                             "days_ahead": {"type": "integer"},
                                             "max_results": {"type": "integer"},
-                                            "data": {
-                                                "type": "array",
-                                                "items": {"type": "object"}
-                                            }
+                                            "data": {"type": "array", "items": {"type": "object"}}
                                         }
                                     }
                                 }
@@ -145,7 +135,7 @@ def openapi_spec():
     }
     return jsonify(spec)
 
-# ------------------ App Entry Point ------------------ #
 if __name__ == "__main__":
+    from os import environ
     port = int(environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
