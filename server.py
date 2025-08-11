@@ -91,60 +91,59 @@ def openapi_spec():
     spec = {
         "openapi": "3.0.0",
         "info": {
-  "openapi": "3.0.0",
-  "info": {
-    "title": "Biotech Clinical Trials API",
-    "version": "1.0.0",
-    "description": "Fetch ClinicalTrials.gov data filtered by phase, date, and number of results."
-  },
-  "servers": [
-    {
-      "url": "https://biotechradar-proxy.onrender.com"
-    }
-  ],
-  "paths": {
-    "/trials": {
-      "get": {
-        "summary": "Get clinical trials",
-        "parameters": [
-          {
-            "name": "phase",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "string" },
-            "description": "Clinical trial phase (e.g., Phase 2, Phase 3)"
-          },
-          {
-            "name": "days_ahead",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "integer" },
-            "description": "Days ahead from today to include in the search"
-          },
-          {
-            "name": "max_results",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "integer" },
-            "description": "Max number of results to return"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A list of clinical trials",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
+            "title": "Biotech Clinical Trials API",
+            "version": "1.0.0",
+            "description": "Fetch ClinicalTrials.gov data filtered by phase, date, and number of results."
+        },
+        "servers": [
+            {
+                "url": "https://biotechradar-proxy.onrender.com"
             }
-          }
+        ],
+        "paths": {
+            "/trials": {
+                "get": {
+                    "summary": "Get clinical trials",
+                    "parameters": [
+                        {
+                            "name": "phase",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "string"},
+                            "description": "Clinical trial phase (e.g., Phase 2, Phase 3)"
+                        },
+                        {
+                            "name": "days_ahead",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "integer"},
+                            "description": "Days ahead from today to include in the search"
+                        },
+                        {
+                            "name": "max_results",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "integer"},
+                            "description": "Max number of results to return"
+                        }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "A list of clinical trials",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
-      }
     }
-  }
-}
+    return jsonify(spec)
 # ------------------------------
 # Entry point
 # ------------------------------
