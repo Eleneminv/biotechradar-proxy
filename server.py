@@ -1,9 +1,11 @@
-from flask import Flask, request, Response
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 import requests
-import json
 from datetime import datetime, timedelta
 from os import environ
+from collections import OrderedDict
+import json
+import reprlib
 
 app = Flask(__name__)
 CORS(app)
@@ -71,28 +73,20 @@ def get_trials():
             days_ahead=days_ahead,
             max_records=max_results
         )
-        return Response(
-            json.dumps({
-                "status": "success",
-                "requested_phase": phase_filter,
-                "days_ahead": days_ahead,
-                "max_results": max_results,
-                "data": records
-            }, indent=2),
-            mimetype="application/json"
-        )
+        return jsonify({
+            "status": "success",
+            "requested_phase": phase_filter,
+            "days_ahead": days_ahead,
+            "max_results": max_results,
+            "data": records
+        }), 200
     except Exception as e:
-        return Response(json.dumps({"status": "error", "message": str(e)}), mimetype="application/json", status=500)
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 # ------------------------------
 # OpenAPI Specification for ChatGPT Actions
 # ------------------------------
-from flask import Response
-import json
-import reprlib
-from collections import OrderedDict
-
 @app.route("/openapi.json", methods=["GET"])
 def openapi_spec():
     servers_list = [
@@ -160,6 +154,7 @@ def openapi_spec():
         json.dumps(spec, indent=2),
         mimetype="application/json; charset=utf-8"
     )
+
 
 # ------------------------------
 # Entry point
