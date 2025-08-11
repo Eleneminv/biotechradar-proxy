@@ -9,6 +9,7 @@ CORS(app)
 
 CLINICAL_TRIALS_API = "https://clinicaltrials.gov/api/query/study_fields"
 
+# ------------------ Fetch Trials Function ------------------ #
 def fetch_trials(phase_filter=["Phase 2", "Phase 3"], days_ahead=180, max_records=50):
     today = datetime.today().date()
     end_date = today + timedelta(days=days_ahead)
@@ -43,6 +44,7 @@ def fetch_trials(phase_filter=["Phase 2", "Phase 3"], days_ahead=180, max_record
 
     return trials_list
 
+# ------------------ API Endpoint ------------------ #
 @app.route('/trials', methods=['GET'])
 def get_trials():
     phase_param = request.args.get("phase", "Phase 2,Phase 3")
@@ -72,13 +74,15 @@ def get_trials():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+# ------------------ OpenAPI Spec for GPT ------------------ #
 @app.route("/openapi.json")
 def openapi_spec():
     spec = {
         "openapi": "3.0.0",
         "info": {
             "title": "Biotech Clinical Trials API",
-            "version": "1.0.0"
+            "version": "1.0.0",
+            "description": "Fetch clinical trials data from ClinicalTrials.gov"
         },
         "servers": [
             {"url": "https://biotechradar-proxy.onrender.com"}
@@ -116,8 +120,20 @@ def openapi_spec():
                             "content": {
                                 "application/json": {
                                     "schema": {
-                                        "type": "array",
-                                        "items": {"type": "object"}
+                                        "type": "object",
+                                        "properties": {
+                                            "status": {"type": "string"},
+                                            "requested_phase": {
+                                                "type": "array",
+                                                "items": {"type": "string"}
+                                            },
+                                            "days_ahead": {"type": "integer"},
+                                            "max_results": {"type": "integer"},
+                                            "data": {
+                                                "type": "array",
+                                                "items": {"type": "object"}
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -129,6 +145,7 @@ def openapi_spec():
     }
     return jsonify(spec)
 
+# ------------------ App Entry Point ------------------ #
 if __name__ == "__main__":
     port = int(environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
