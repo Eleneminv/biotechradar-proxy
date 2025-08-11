@@ -88,6 +88,9 @@ def get_trials():
 # ------------------------------
 # OpenAPI Specification for ChatGPT Actions
 # ------------------------------
+from flask import Response
+import json
+
 @app.route("/openapi.json", methods=["GET"])
 def openapi_spec():
     spec = {
@@ -145,8 +148,12 @@ def openapi_spec():
             }
         }
     }
-    return Response(json.dumps(spec, indent=2, sort_keys=False), mimetype="application/json")
 
+    # Serve clean JSON with correct headers
+    return Response(
+        json.dumps(spec, indent=2),
+        mimetype="application/json; charset=utf-8"
+    )
 
 # ------------------------------
 # Entry point
