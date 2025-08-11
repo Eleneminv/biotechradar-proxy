@@ -87,15 +87,17 @@ def get_trials():
 # ------------------------------
 # OpenAPI Specification for ChatGPT Actions
 # ------------------------------
+from collections import OrderedDict
+
 @app.route("/openapi.json", methods=["GET"])
 def openapi_spec():
     spec = OrderedDict([
         ("openapi", "3.0.0"),
-        ("info", {
-            "title": "Biotech Clinical Trials API",
-            "version": "1.0.0",
-            "description": "Fetch ClinicalTrials.gov data filtered by phase, date, and number of results."
-        }),
+        ("info", OrderedDict([
+            ("title", "Biotech Clinical Trials API"),
+            ("version", "1.0.0"),
+            ("description", "Fetch ClinicalTrials.gov data filtered by phase, date, and number of results.")
+        ])),
         ("servers", [
             {"url": "https://biotechradar-proxy.onrender.com"}
         ]),
@@ -131,7 +133,9 @@ def openapi_spec():
                             "description": "A list of clinical trials",
                             "content": {
                                 "application/json": {
-                                    "schema": {"type": "object"}
+                                    "schema": {
+                                        "type": "object"
+                                    }
                                 }
                             }
                         }
@@ -141,7 +145,6 @@ def openapi_spec():
         })
     ])
     return jsonify(spec)
-
 
 # ------------------------------
 # Entry point for Render
