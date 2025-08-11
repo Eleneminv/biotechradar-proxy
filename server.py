@@ -60,3 +60,56 @@ if __name__ == "__main__":
     from os import environ
     port = int(environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+@app.route("/openapi.json")
+def openapi_spec():
+    spec = {
+        "openapi": "3.0.0",
+        "info": {
+            "title": "Biotech Clinical Trials API",
+            "version": "1.0.0"
+        },
+        "paths": {
+            "/trials": {
+                "get": {
+                    "summary": "Get clinical trials",
+                    "parameters": [
+                        {
+                            "name": "phase",
+                            "in": "query",
+                            "schema": {"type": "string"},
+                            "required": False,
+                            "description": "Clinical trial phase (e.g., Phase 2, Phase 3)"
+                        },
+                        {
+                            "name": "days_ahead",
+                            "in": "query",
+                            "schema": {"type": "integer"},
+                            "required": False,
+                            "description": "Days ahead from today to include in the search"
+                        },
+                        {
+                            "name": "max_results",
+                            "in": "query",
+                            "schema": {"type": "integer"},
+                            "required": False,
+                            "description": "Max number of results to return"
+                        }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "A list of clinical trials",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "array",
+                                        "items": {"type": "object"}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return jsonify(spec)
