@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
 from datetime import datetime, timedelta
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -42,31 +43,47 @@ def fetch_trials(phase_filter=["Phase 2", "Phase 3"], days_ahead=180, max_record
 
     return trials_list
 
-@app.route("/trials", methods=["GET"])
+
+@app.route('/trials', methods=['GET'])
 def get_trials():
-    phase = request.args.get("phase", "Phase 3")
+    # Read parameters with safe defaults
+    phase_param = request.args.get("phase", "Phase 2,Phase 3")
     days_ahead = int(request.args.get("days_ahead", 180))
     max_results = int(request.args.get("max_results", 50))
 
-    trials = fetch_trials([phase], days_ahead, max_results)
-    return jsonify(trials)
+    # Normalize phases into list (remove spaces, allow "2" -> "Phase 2")
+    phase_filter = []
+    for p in phase_param.split(","):
+        p = p.strip()
+        if not p.lower().startswith("phase"):
+            p = f"Phase {p}"
+        phase_filter.append(p)
 
-@app.route("/", methods=["GET"])
-def home():
-    return jsonify({"status": "ok", "message": "Biotech Radar API is running"})
+    try:
+        records = fetch_trials(
+            phase_filter=phase_filter,
+            days_ahead=days_ahead,
+            max_records=max_results
+        )
+        return jsonify({
+            "status": "success",
+            "requested_phase": phase_filter,
+            "days_ahead": days_ahead,
+            "max_results": max_results,
+            "data": records
+        }), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
-# Render entry point
-if __name__ == "__main__":
-    from os import environ
-    port = int(environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+
 @app.route("/openapi.json")
 def openapi_spec():
     spec = {
         "openapi": "3.0.0",
         "info": {
             "title": "Biotech Clinical Trials API",
-            "version": "1.0.0"
+            "version": "1.0.0",
+            "description": "Fetch live clinical trial data from ClinicalTrials.gov filtered by phase, date, and record limit."
         },
         "servers": [
             {"url": "https://biotechradar-proxy.onrender.com"}
@@ -116,3 +133,9 @@ def openapi_spec():
         }
     }
     return jsonify(spec)
+
+
+# Render entry point
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
