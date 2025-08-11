@@ -16,7 +16,6 @@ def fetch_trials(phase_filter=["Phase 2", "Phase 3"], days_ahead=180, max_record
     today = datetime.today().date()
     end_date = today + timedelta(days=days_ahead)
 
-    # Fixed query format to avoid 404
     expr = f"AREA[Phase]({' OR '.join(phase_filter)}) AND NOT OVERALL_STATUS:Recruiting"
 
     params = {
@@ -58,7 +57,6 @@ def get_trials():
     days_ahead = int(request.args.get("days_ahead", 180))
     max_results = int(request.args.get("max_results", 50))
 
-    # Normalize phases
     phase_filter = []
     for p in phase_param.split(","):
         p = p.strip()
@@ -144,6 +142,8 @@ def openapi_spec():
         }
     }
     return jsonify(spec)
+
+
 # ------------------------------
 # Entry point
 # ------------------------------
