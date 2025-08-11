@@ -74,7 +74,7 @@ def get_trials():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@app.route('/openapi.json', methods=['GET'])
+@app.route("/openapi.json", methods=["GET"])
 def openapi_spec():
     spec = {
         "openapi": "3.0.0",
@@ -84,7 +84,9 @@ def openapi_spec():
             "description": "Fetch ClinicalTrials.gov data filtered by phase, date, and number of results."
         },
         "servers": [
-            {"url": "https://biotechradar-proxy.onrender.com"}
+            {
+                "url": "https://biotechradar-proxy.onrender.com"
+            }
         ],
         "paths": {
             "/trials": {
@@ -94,23 +96,23 @@ def openapi_spec():
                         {
                             "name": "phase",
                             "in": "query",
-                            "description": "Clinical trial phase (e.g., Phase 2, Phase 3)",
                             "required": False,
-                            "schema": {"type": "string"}
+                            "schema": {"type": "string"},
+                            "description": "Clinical trial phase (e.g., Phase 2, Phase 3)"
                         },
                         {
                             "name": "days_ahead",
                             "in": "query",
-                            "description": "Days ahead from today to include in the search",
                             "required": False,
-                            "schema": {"type": "integer"}
+                            "schema": {"type": "integer"},
+                            "description": "Days ahead from today to include in the search"
                         },
                         {
                             "name": "max_results",
                             "in": "query",
-                            "description": "Max number of results to return",
                             "required": False,
-                            "schema": {"type": "integer"}
+                            "schema": {"type": "integer"},
+                            "description": "Max number of results to return"
                         }
                     ],
                     "responses": {
@@ -118,7 +120,9 @@ def openapi_spec():
                             "description": "A list of clinical trials",
                             "content": {
                                 "application/json": {
-                                    "schema": {"type": "object"}
+                                    "schema": {
+                                        "type": "object"
+                                    }
                                 }
                             }
                         }
@@ -128,8 +132,3 @@ def openapi_spec():
         }
     }
     return jsonify(spec)
-
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
